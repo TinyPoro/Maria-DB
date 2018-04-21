@@ -1,8 +1,8 @@
 [Nguồn](https://mariadb.com/kb/en/library/compound-composite-indexes/ "Permalink to Compound (Composite) Indexes - MariaDB Knowledge Base")
 
-# Các chỉ mục hỗn hợp(composite) - kiến thức mariaDB cở sở,
+# Các chỉ mục trôn(hỗn hợp) - kiến thức mariaDB cở sở,
 
-## 1 bài học nhỏ trong "chỉ mục hỗn hợp" ("chỉ mục composite")
+## 1 bài học nhỏ trong "chỉ mục trộn" ("chỉ mục hỗn hợp")
 
 Tài liệu này bắt đầu 1 cách tầm thường và có lẽ là chán ngắt, nhưng hướng tới nhiều thông tin thú vị hơn, có lẽ là những thứ bạn không nhận ra được về cách chỉ mục MariaDB và MySQL hoạt động thế nào.
 
@@ -48,7 +48,7 @@ Bảng `Presidents` có sẵn trông như thế này.
 * Không chỉ mục nào cả
 * Chỉ mục(first_name), Chỉ mục(last_name) (2 chỉ mục riêng biệt) 
 * "Index Merge Intersect" 
-* chỉ mục(last_name, first_name) (1 chỉ mục "compound") 
+* chỉ mục(last_name, first_name) (1 chỉ mục "trộn") 
 * chỉ mục(last_name, first_name, term) (1 chỉ mục "covering" ) 
 * các biến thể 
 
@@ -98,7 +98,6 @@ Xem nào, tôi đang tào lao 1 chút ở đây. Tôi có 1 KHÓA CHÍNH  TRÊN 
 * 1 tìm kiếm trên BTree thực sự nhanh và hiệu quả . Với 1 bảng 1 triệu dòng, có thể có 3 mực BTree, và 2 mực trên cùng có lẽ sẽ được cache
 * Mỗi chỉ mục thứ cấp sẽ la 1 BTree khác, với khóa chính nhưu là 1 lá.
 * Thu thập các phẩn tử ` liên tucj` ( dựa theo chỉ mục) từ BTree rất hiệu quả vì nó được lưu 1 cách liên tục.
-* For the sake of simplicity, we can count each BTree lookup as 1 unit of work, and ignore scans for consecutive items. This approximates the number of disk hits for a large table in a busy system. 
 * Để cho đơn giản hơn, chúng ta có thể coi mỗi tìm kiếm trên BTree như là 1 đơn vị công việc, và loại bỏ các lượt quét các thành phần liên tục. Điều này xấp xỉ số lần đĩa chọc vào bảng lớn trong hệ thống bận,
 
 Vơi MyISAM, KHÓA CHÍNH không được lưu trong dữ liệu, vì vậy hay coi nó như là khóa thứ cấp (rất đơn giản)
@@ -115,7 +114,7 @@ nó sẽ phân tích các chỉ mục có thể
 2\. Lấy PRIMARY KEY (ngầm thêm vào mỗi chỉ mục thứ cấp trong InnoDB); lấy (17, 36). 
 3\. Tiếp cận dữ liệu sử dụng chuỗi = (17, 36)  để lấy các dòng cho Andrew Johnson và Lyndon B. Johnson.
 4\.  Sử dụng phần còn lại của mệnh đề WHERE lọc tất cả trừ dòng mong muốn
-5\. Phân phối kết quả (1865-1869). 
+5\. Xuất kết quả (1865-1869). 
     
     
     mysql>  EXPLAIN  SELECT  term
@@ -135,7 +134,12 @@ nó sẽ phân tích các chỉ mục có thể
 
 ## "Index Merge Intersect"
 
-OK, so you get really smart and decide that MySQL should be smart enough to use both name indexes to get the answer. This is called "Intersect". 1\. Using INDEX(last_name), find 2 index entries with last_name = 'Johnson'; get (7, 17) 2\. Using INDEX(first_name), find 2 index entries with first_name = 'Andrew'; get (17, 36) 3\. "And" the two lists together (7,17) & (17,36) = (17) 4\. Reach into the data using seq = (17) to get the row for Andrew Johnson. 5\. Deliver the answer (1865-1869).
+Được rồi, bạn sẽ trở trên thực sự thông minh và quyết định rằng MySQL nên đủ thông minh để sử dụng cả 2 tên chỉ mục để lấy kết quả. Điều này được gọi là "Interrsect.
+1\. Sử dụng chỉ mục (last_name), tìm 2 phần tử chỉ mục với last_name = 'Johnson'; được (7,17)
+2\. Sử dụng chỉ mục (first_name), tìm 2 phần tử chỉ mục với first_name = 'Andrew'; được(17,36)
+3\. "Phép and" 2 danh sách với nhau (7,17) & (17,36) = (17)
+4\. Tiếp cận dữ liệu sử dụng chuỗi = (17) để lấy dòng cho Andrew Johnson.
+5\. Xuất kết quả (1865-1869). 
     
     
                id: 1
@@ -150,11 +154,14 @@ OK, so you get really smart and decide that MySQL should be smart enough to use 
             Extra: Using intersect(first_name,last_name); Using where
     
 
-The EXPLAIN fails to give the gory details of how many rows collected from each index, etc.
+Dòng giải thích quên không đưa tập thông tin về có bao nhiêu dòng được thu tập từ mỗi chỉ mục, vân vân.
 
-## INDEX(last_name, first_name)
+## Chỉ mục(last_name, first_name)
 
-This is called a "compound" or "composite" index since it has more than one column. 1\. Drill down the BTree for the index to get to exactly the index row for Johnson+Andrew; get seq = (17). 2\. Reach into the data using seq = (17) to get the row for Andrew Johnson. 3\. Deliver the answer (1865-1869). This is much better. In fact this is usually the "best".
+Đây gọi là 1 chỉ mục "trộn" hoặc "hỗn hợp" vì nó có nhiều hơn 1 cột. 
+1\. Tìm kiếm chỉ mục trong Btree để lấy chỉnh xác dòng chỉ mục cho Johnson+Andrew, được chuỗi = (17).
+2\. Tiếp cận dữ liệu sử dụng chuỗi = (17) để lấy dòng Andrew Johnson.
+3\. Xuất câu trả lời(1865-1869). Điều này tốt hơn rất nhiều. Sự thực là điều này thường là "tốt nhất".
     
     
         ALTER TABLE Presidents
@@ -173,9 +180,11 @@ This is called a "compound" or "composite" index since it has more than one colu
             Extra: Using where
     
 
-## "Covering": INDEX(last_name, first_name, term)
+## "bao trùm": Chỉ mục(last_name, first_name, term)
 
-Surprise! We can actually do a little better. A "Covering" index is one in which _all_ of the fields of the SELECT are found in the index. It has the added bonus of not having to reach into the "data" to finish the task. 1\. Drill down the BTree for the index to get to exactly the index row for Johnson+Andrew; get seq = (17). 2\. Deliver the answer (1865-1869). The "data" BTree is not touched; this is an improvement over "compound".
+Nhạc nhiên chưa! Chúng ta thực sự có thể làm tốt hơn 1 chút. 1 chỉ mục "Bao trùm" là 1 thứ mà _tất cả_ các trường của lệnh SELECT có thể được tìm thấy trong chỉ mục. Nó  có 1 điểm cộng thêm là không phải tiếp cận "dữ liệu"để hoàn thành công việc.
+1\. Tìm kiếm chỉ mục trong BTre để lấy chỉ mục chính xác của dọng Johnson+Andrew, được chuỗi =(17).
+2\. Xuất kết quả (1865-1869). "Dữ liệu" BTree không được động tới, đây là sự cỉa tiến so với "trộn".
     
     
         ... ADD INDEX covering(last_name, first_name, term);
@@ -192,15 +201,15 @@ Surprise! We can actually do a little better. A "Covering" index is one in which
             Extra: Using where; Using index   <-- Note
     
 
-Everything is similar to using "compound", except for the addition of "Using index".
+Mọi thứ tương tự như việc sử dụng "trộn", ngoài trừ việc thêm là "Sử dụng chỉ mục".
 
-## Variants
+## Các biến thể
 
-* What would happen if you shuffled the fields in the WHERE clause? Answer: The order of ANDed things does not matter. 
-* What would happen if you shuffled the fields in the INDEX? Answer: It may make a huge difference. More in a minute. 
-* What if there are extra fields on the the end? Answer: Minimal harm; possibly a lot of good (eg, 'covering'). 
-* Reduncancy? That is, what if you have both of these: INDEX(a), INDEX(a,b)? Answer: Reduncy costs something on INSERTs; it is rarely useful for SELECTs. 
-* Prefix? That is, INDEX(last_name(5). first_name(5)) Answer: Don't bother; it rarely helps, and often hurts. (The details are another topic.) 
+* Điều gì sẽ xảy ra nếu bạn xáo trộn các trường trong mệnh đề WHERE? Câu trả lời: Thứ tự mọi thứ trong AND không quan trọng.
+* Điều gì sẽ xảy ra nếu bạn xáo trộn các trường trong Chỉ Mục ? Câu trả lời: Nó có thể tạo 1 sự khác biệt cực lớn. Có thể hơn 1 phút.
+* Sẽ thế nào nếu có thêm trường vào cuối cùng? Câu trả lời: 1 chút ảnh hưởng nhỏ, có thể rất nhiều cái tốt ( ví dụ, "bao trùm").
+* Thừa? Đó là, sẽ thế nào nếu bạn có cả 2 thứu này: Chỉ mục (a), Chỉ mục (a,b)? Cấu trà lời: Thừa chi phí gì đó trong các lệnh INSERT; nó hiếm khi có tác dụng trong các lệnh SELECT.
+* Tiền tố? Đó là, Chỉ mục(last_name(5). first_name(5)) Câu trả lời: đừng bận tâm; nó hiếm khi có tác dụng, và thường làm hại. (chi tiết trong 1 chủ đề khác.)
 
 ## Thêm ví dụ:
     
