@@ -7,7 +7,7 @@
 Tài liệu này bắt đầu 1 cách tầm thường và có lẽ là chán ngắt, nhưng hướng tới nhiều thông tin thú vị hơn, có lẽ là những thứ bạn không nhận ra được về cách chỉ mục MariaDB và MySQL hoạt động thế nào.
 
 
-Nó cũng giải thích [Giải thích][1] (cho vài phạm vi nhất định)
+Nó cũng giải thích [lệnh Explain][1] (cho vài phạm vi nhất định)
 
 (Hầu hết những điều này cũng áp dụng cho các nhánh cơ sở dữ liệu không phải MySQl
 
@@ -154,7 +154,9 @@ nó sẽ phân tích các chỉ mục có thể
             Extra: Using intersect(first_name,last_name); Using where
     
 
-Dòng giải thích quên không đưa tập thông tin về có bao nhiêu dòng được thu tập từ mỗi chỉ mục, vân vân.
+Dòng 
+
+quên không đưa tập thông tin về có bao nhiêu dòng được thu tập từ mỗi chỉ mục, vân vân.
 
 ## Chỉ mục(last_name, first_name)
 
