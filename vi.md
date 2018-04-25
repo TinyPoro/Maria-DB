@@ -95,9 +95,9 @@ Xem nào, tôi đang tào lao 1 chút ở đây. Tôi có 1 KHÓA CHÍNH  TRÊN 
 Đầu tiện, hãy miêu tả các InnoDB lưu trữ và sử dụng các chỉ mục.
 
 * Dữ liệu và KHÓA CHÍNH được "nhóm lại" cùng nhau trong BTree.
-* 1 tìm kiếm trên BTree thực sự nhanh và hiệu quả . Với 1 bảng 1 triệu dòng, có thể có 3 mực BTree, và 2 mực trên cùng có lẽ sẽ được cache
+* 1 tìm kiếm trên BTree thực sự nhanh và hiệu quả . Với 1 bảng 1 triệu dòng, có thể có 3 mức BTree, và 2 mức trên cùng có lẽ sẽ được cache
 * Mỗi chỉ mục thứ cấp sẽ la 1 BTree khác, với khóa chính nhưu là 1 lá.
-* Thu thập các phẩn tử ` liên tucj` ( dựa theo chỉ mục) từ BTree rất hiệu quả vì nó được lưu 1 cách liên tục.
+* Thu thập các phẩn tử ` liên tục` ( dựa theo chỉ mục) từ BTree rất hiệu quả vì nó được lưu 1 cách liên tục.
 * Để cho đơn giản hơn, chúng ta có thể coi mỗi tìm kiếm trên BTree như là 1 đơn vị công việc, và loại bỏ các lượt quét các thành phần liên tục. Điều này xấp xỉ số lần đĩa chọc vào bảng lớn trong hệ thống bận,
 
 Vơi MyISAM, KHÓA CHÍNH không được lưu trong dữ liệu, vì vậy hay coi nó như là khóa thứ cấp (rất đơn giản)
@@ -113,7 +113,7 @@ nó sẽ phân tích các chỉ mục có thể
 1\. Sử dụng INDEX(last_name), tìm 2 mục index với last_name = 'Johnson'. 
 2\. Lấy PRIMARY KEY (ngầm thêm vào mỗi chỉ mục thứ cấp trong InnoDB); lấy (17, 36). 
 3\. Tiếp cận dữ liệu sử dụng chuỗi = (17, 36)  để lấy các dòng cho Andrew Johnson và Lyndon B. Johnson.
-4\.  Sử dụng phần còn lại của mệnh đề WHERE lọc tất cả trừ dòng mong muốn
+4\. Sử dụng phần còn lại của mệnh đề WHERE lọc tất cả trừ dòng mong muốn
 5\. Xuất kết quả (1865-1869). 
     
     
@@ -154,9 +154,7 @@ nó sẽ phân tích các chỉ mục có thể
             Extra: Using intersect(first_name,last_name); Using where
     
 
-Dòng 
-
-quên không đưa tập thông tin về có bao nhiêu dòng được thu tập từ mỗi chỉ mục, vân vân.
+~~Dòng quên không đưa tập~~ **EXPLAIN không cung cấp**thông tin về có bao nhiêu dòng được thu tập từ mỗi chỉ mục, vân vân.
 
 ## Chỉ mục(last_name, first_name)
 
@@ -185,7 +183,7 @@ quên không đưa tập thông tin về có bao nhiêu dòng được thu tập
 ## "bao trùm": Chỉ mục(last_name, first_name, term)
 
 Nhạc nhiên chưa! Chúng ta thực sự có thể làm tốt hơn 1 chút. 1 chỉ mục "Bao trùm" là 1 thứ mà _tất cả_ các trường của lệnh SELECT có thể được tìm thấy trong chỉ mục. Nó  có 1 điểm cộng thêm là không phải tiếp cận "dữ liệu"để hoàn thành công việc.
-1\. Tìm kiếm chỉ mục trong BTre để lấy chỉ mục chính xác của dọng Johnson+Andrew, được chuỗi =(17).
+1\. Tìm kiếm chỉ mục trong BTree để lấy chỉ mục chính xác của dọng Johnson+Andrew, được chuỗi =(17).
 2\. Xuất kết quả (1865-1869). "Dữ liệu" BTree không được động tới, đây là sự cỉa tiến so với "trộn".
     
     
