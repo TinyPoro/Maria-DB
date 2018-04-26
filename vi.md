@@ -9,7 +9,7 @@ Tài liệu này bắt đầu 1 cách tầm thường và có lẽ là chán ng�
 
 Nó cũng giải thích [lệnh Explain][1] (cho vài phạm vi nhất định)
 
-(Hầu hết những điều này cũng áp dụng cho các nhánh cơ sở dữ liệu không phải MySQl
+(Hầu hết những điều này cũng áp dụng cho các cơ sở dữ liệu không phải MySQl
 
 ## Câu truy vấn để thảo luận
 
@@ -43,13 +43,13 @@ Bảng `Presidents` có sẵn trông như thế này.
               AND  first_name = 'Andrew';
     
 
-1 vài chỉ mục INDEXes để thử...
+1 vài chỉ mục để thử...
 
 * Không chỉ mục nào cả
-* Chỉ mục(first_name), Chỉ mục(last_name) (2 chỉ mục riêng biệt) 
+* Chỉ mục(first_name), chỉ mục(last_name) (2 chỉ mục riêng biệt) 
 * "Index Merge Intersect" 
-* chỉ mục(last_name, first_name) (1 chỉ mục "trộn") 
-* chỉ mục(last_name, first_name, term) (1 chỉ mục "covering" ) 
+* Chỉ mục(last_name, first_name) (1 chỉ mục "trộn") 
+* Chỉ mục(last_name, first_name, term) (1 chỉ mục "covering" ) 
 * các biến thể 
 
 ## Không chỉ mục nào cả
@@ -96,9 +96,9 @@ Xem nào, tôi đang tào lao 1 chút ở đây. Tôi có 1 KHÓA CHÍNH  TRÊN 
 
 * Dữ liệu và KHÓA CHÍNH được "nhóm lại" cùng nhau trong BTree.
 * 1 tìm kiếm trên BTree thực sự nhanh và hiệu quả . Với 1 bảng 1 triệu dòng, có thể có 3 mực BTree, và 2 mực trên cùng có lẽ sẽ được cache
-* Mỗi chỉ mục thứ cấp sẽ la 1 BTree khác, với khóa chính nhưu là 1 lá.
-* Thu thập các phẩn tử ` liên tucj` ( dựa theo chỉ mục) từ BTree rất hiệu quả vì nó được lưu 1 cách liên tục.
-* Để cho đơn giản hơn, chúng ta có thể coi mỗi tìm kiếm trên BTree như là 1 đơn vị công việc, và loại bỏ các lượt quét các thành phần liên tục. Điều này xấp xỉ số lần đĩa chọc vào bảng lớn trong hệ thống bận,
+* Mỗi chỉ mục thứ cấp sẽ la 1 BTree khác, với khóa chính như là 1 lá.
+* Thu thập các phẩn tử ` liên tiếp` ( dựa theo chỉ mục) từ BTree rất hiệu quả vì nó được lưu 1 cách liên tục.
+* Để cho đơn giản hơn, chúng ta có thể coi mỗi tìm kiếm trên BTree như là 1 đơn vị công việc, và loại bỏ các lượt quét các thành phần liên tục. Điều này xấp xỉ số lần đĩa chọc vào bảng lớn trong hệ thống đang hoạt động,
 
 Vơi MyISAM, KHÓA CHÍNH không được lưu trong dữ liệu, vì vậy hay coi nó như là khóa thứ cấp (rất đơn giản)
 
@@ -109,7 +109,7 @@ Với người mới làm quen, một khi anh ta học được về đánh ch�
 MySQL hiếm khi sử dùng nhiều hơn 1 chỉ mục 1 lúc trong 1 câu truy vấn. Vì vậy, 
 nó sẽ phân tích các chỉ mục có thể
 * first_name -- có 2 dòng khả dụng (1 tìm kiếm BTree , sau đó duyệt lần lượt) 
-* last_name -- có 2 dòng khả dung. Hãy bảo nó chọn lastname. Đấy là các bước thực hiện việc SELECT: 
+* last_name -- có 2 dòng khả dung. Giả sử nó chọn last_name. Đấy là các bước thực hiện việc SELECT: 
 1\. Sử dụng INDEX(last_name), tìm 2 mục index với last_name = 'Johnson'. 
 2\. Lấy PRIMARY KEY (ngầm thêm vào mỗi chỉ mục thứ cấp trong InnoDB); lấy (17, 36). 
 3\. Tiếp cận dữ liệu sử dụng chuỗi = (17, 36)  để lấy các dòng cho Andrew Johnson và Lyndon B. Johnson.
@@ -134,10 +134,10 @@ nó sẽ phân tích các chỉ mục có thể
 
 ## "Index Merge Intersect"
 
-Được rồi, bạn sẽ trở trên thực sự thông minh và quyết định rằng MySQL nên đủ thông minh để sử dụng cả 2 tên chỉ mục để lấy kết quả. Điều này được gọi là "Interrsect.
+Được rồi, bạn sẽ thực sự thông minh và quyết định rằng MySQL nên đủ thông minh để sử dụng cả 2 tên chỉ mục để lấy kết quả. Điều này được gọi là "Interrsect.
 1\. Sử dụng chỉ mục (last_name), tìm 2 phần tử chỉ mục với last_name = 'Johnson'; được (7,17)
 2\. Sử dụng chỉ mục (first_name), tìm 2 phần tử chỉ mục với first_name = 'Andrew'; được(17,36)
-3\. "Phép and" 2 danh sách với nhau (7,17) & (17,36) = (17)
+3\. "And" 2 danh sách với nhau (7,17) & (17,36) = (17)
 4\. Tiếp cận dữ liệu sử dụng chuỗi = (17) để lấy dòng cho Andrew Johnson.
 5\. Xuất kết quả (1865-1869). 
     
@@ -153,10 +153,9 @@ nó sẽ phân tích các chỉ mục có thể
              rows: 1
             Extra: Using intersect(first_name,last_name); Using where
     
+ 
 
-Dòng 
-
-quên không đưa tập thông tin về có bao nhiêu dòng được thu tập từ mỗi chỉ mục, vân vân.
+EXPLAIN không đưa tập thông tin chi tiết về có bao nhiêu dòng được thu thập từ mỗi chỉ mục, vân vân.
 
 ## Chỉ mục(last_name, first_name)
 
